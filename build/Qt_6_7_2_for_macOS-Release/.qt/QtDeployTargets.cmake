@@ -1,0 +1,2 @@
+set(__QT_DEPLOY_TARGET_TNGemBrowser_FILE /Users/artwaw/cpp/TNGemBrowser/build/Qt_6_7_2_for_macOS-Release/TNGemBrowser.app/Contents/MacOS/TNGemBrowser)
+set(__QT_DEPLOY_TARGET_TNGemBrowser_TYPE EXECUTABLE)

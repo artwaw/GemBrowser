@@ -1,0 +1,6 @@
+set(__QT_DEPLOY_TARGET_core_FILE /Users/artwaw/cpp/TNGemBrowser/build/Qt_6_7_2_for_macOS-Debug/src/core/libcore.dylib)
+set(__QT_DEPLOY_TARGET_core_TYPE SHARED_LIBRARY)
+set(__QT_DEPLOY_TARGET_TNGemBrowser_FILE /Users/artwaw/cpp/TNGemBrowser/build/Qt_6_7_2_for_macOS-Debug/src/Desktop/TNGemBrowser.app/Contents/MacOS/TNGemBrowser)
+set(__QT_DEPLOY_TARGET_TNGemBrowser_TYPE EXECUTABLE)
+set(__QT_DEPLOY_TARGET_GemBrowserTests_FILE /Users/artwaw/cpp/TNGemBrowser/build/Qt_6_7_2_for_macOS-Debug/tests/GemBrowserTests)
+set(__QT_DEPLOY_TARGET_GemBrowserTests_TYPE EXECUTABLE)
