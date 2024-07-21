@@ -1,4 +1,20 @@
+/*
+This file is part of GemBrowser project.
+GemBrowser is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+GemBrowser is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details (file LICENSE).
+You should have received a copy of the GNU General Public License
+along with GemBrowser.  If not, see <https://www.gnu.org/licenses/>.
+SPDX: GPL-3.0-or-later
+*/
+
 #include "geminiprotocol.h"
+#include "toolkitclass.h"
 
 #include <QSslCertificate>
 #include <QSslConfiguration>
@@ -17,12 +33,7 @@ GeminiProtocol::GeminiProtocol(QObject *parent) : QObject{parent} {
     QSslConfiguration config = socket.sslConfiguration();
     config.setProtocol(QSsl::TlsV1_2OrLater);
     socket.setSslConfiguration(config);
-    QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
-    QDir dir(dataPath);
-    if (!dir.exists()) {
-        dir.mkpath(dataPath);
-    }
-    if (!dataPath.endsWith('/')) { dataPath.append('/'); }
+    QString dataPath = ToolkitClass::dataPath();
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE","ssl");
     db.setDatabaseName(dataPath+"data.db");
     if (!db.open()) {
@@ -49,6 +60,9 @@ void GeminiProtocol::fetchPage(const QString &uri) {
     QString query = uri;
     QStringList parts = query.remove("gemini://").split('/',Qt::SkipEmptyParts);
     _uri = uri;
+    if (socket.state()==QSslSocket::ConnectedState||socket.state()==QSslSocket::ConnectingState) {
+        socket.close();
+    }
     socket.connectToHostEncrypted(parts.at(0),_port);
     socket.write(_uri.toUtf8());
 }

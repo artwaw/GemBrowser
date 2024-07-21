@@ -1,3 +1,18 @@
+/*
+This file is part of GemBrowser project.
+GemBrowser is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+GemBrowser is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details (file LICENSE).
+You should have received a copy of the GNU General Public License
+along with GemBrowser.  If not, see <https://www.gnu.org/licenses/>.
+SPDX: GPL-3.0-or-later
+*/
+
 #include "configfile.h"
 
 #include <QFile>
@@ -18,7 +33,6 @@ ConfigFile::ConfigFile(QObject *parent,const QString cfg_file) : QObject{parent}
             qWarning("Can't make path: %c",_fpath.data()->toLatin1());
         }
     }
-    qDebug() << _fpath;
     readSettings();
 }
 
@@ -47,6 +61,16 @@ void ConfigFile::alterBrowsing(const browsingStruct &browse) {
     emit configChanged();
 }
 
+void ConfigFile::setGeo(const QSize &_geo) {
+    if (_geo.isEmpty()) { return; }
+    setup.geo = _geo;
+}
+
+void ConfigFile::setPos(const QPoint &_pos) {
+    if (_pos.isNull()) { return; }
+    setup.pos = _pos;
+}
+
 void ConfigFile::readSettings() {
     QFile f(_fpath);
     if (!f.exists()||f.size()==0) {
@@ -59,12 +83,10 @@ void ConfigFile::readSettings() {
         emit error();
         return;
     }
-    qDebug() << f.exists() << f.size();
     QBuffer buf;
     QByteArray dta;
     QDataStream raw(&f);
     raw >> dta;
-    qDebug() << "general read:" << dta.size();
     buf.setData(qUncompress(dta));
     buf.open(QIODevice::ReadOnly);
     QDataStream dStream(&buf);
@@ -75,7 +97,6 @@ void ConfigFile::readSettings() {
     dStream >> _general.forDays;
     dStream >> _general.saveHistory;
     raw >> dta;
-    qDebug() << "visual read:" << dta.size();
     buf.close();
     buf.setData(qUncompress(dta));
     buf.open(QIODevice::ReadOnly);
@@ -96,13 +117,19 @@ void ConfigFile::readSettings() {
     }
 //tls is empty, will be added here
     raw >> dta;
-    qDebug() << "browse read:" << dta.size();
     buf.close();
     buf.setData(qUncompress(dta));
     buf.open(QIODevice::ReadOnly);
     dStream >> _browser.newTab;
     dStream >> _browser.externalOption;
     dStream >> _browser.home;
+    buf.close();
+    raw >> dta;
+    buf.setData(qUncompress(dta));
+    buf.open(QIODevice::ReadOnly);
+    dStream >> setup.geo;
+    dStream >> setup.pos;
+    dStream >> setup.tabs;
     buf.close();
     f.close();
     emit configChanged();
@@ -130,7 +157,6 @@ void ConfigFile::writeSettings() {
     dStream << _general.saveHistory;
     dta = qCompress(buf.data(),9);
     raw << dta;
-    qDebug() << "general write:" << dta.size();
     buf.close();
     buf.buffer().clear();
     dta.clear();
@@ -149,7 +175,6 @@ void ConfigFile::writeSettings() {
     }
     dta = qCompress(buf.data(),9);
     raw << dta;
-    qDebug() << "visual write:" << dta.size();
     buf.close();
 //tls is empty, implementation comes here
     buf.buffer().clear();
@@ -160,13 +185,20 @@ void ConfigFile::writeSettings() {
     dStream << _browser.home;
     dta = qCompress(buf.data(),9);
     raw << dta;
-    qDebug() << "browse write:" << dta.size();
+    buf.close();
+    buf.buffer().clear();
+    dta.clear();
+    buf.open(QIODevice::WriteOnly);
+    dStream << setup.geo;
+    dStream << setup.pos;
+    dStream << setup.tabs;
+    dta = qCompress(buf.data(),9);
+    raw << dta;
     buf.close();
     f.close();
 }
 
 void ConfigFile::defaults(const int type, const int section) {
-    qDebug() << "section" << section;
     if (type==ConfigFile::General||type==ConfigFile::All) {
         _general.saveHistory = false;
         _general.allGems = false;
@@ -195,6 +227,11 @@ void ConfigFile::defaults(const int type, const int section) {
         _browser.externalOption = ConfigFile::OsOption;
         _browser.home = "medusae.space";
         _browser.newTab = true;
+    }
+    if (type==ConfigFile::Setup||type==ConfigFile::All) {
+        setup.geo =  QSize(800,450);
+        setup.pos = QPoint(12,74);
+        setup.tabs.clear();
     }
     writeSettings();
 }

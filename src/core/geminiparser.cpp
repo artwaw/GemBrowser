@@ -1,3 +1,18 @@
+/*
+This file is part of GemBrowser project.
+GemBrowser is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+GemBrowser is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details (file LICENSE).
+You should have received a copy of the GNU General Public License
+along with GemBrowser.  If not, see <https://www.gnu.org/licenses/>.
+SPDX: GPL-3.0-or-later
+*/
+
 #include "geminiparser.h"
 
 #include <QTextCursor>
@@ -11,10 +26,89 @@ GeminiParser::GeminiParser(QObject *parent, ConfigFile *cfg) : QObject(parent) {
     _cfg = cfg;
     _txt = new QTextDocument(this);
     reloadCache();
+    connect(&conn,&GeminiProtocol::newPage,this,[this](){
+        parsePage(conn.lastPage());
+    });
+    connect(&conn,&GeminiProtocol::error,this,[this](const int code){
+        if (code == 1) { return; }
+        emit status(code,conn.errorStr());
+    });
+    connect(&conn,&GeminiProtocol::status,this,[this](const int code){
+        emit status(code,conn.errorStr());
+    });
 }
 
 GeminiParser::~GeminiParser() {
     delete _txt;
+}
+
+QTextDocument* GeminiParser::getPage() const {
+    return _txt;
+}
+
+QTextCharFormat GeminiParser::getStyle(const int item) const {
+    ConfigFile::visualStruct vis = _cfg->getVisual(item);
+    QTextCharFormat fmt;
+    fmt.setForeground(QBrush(QVariant(vis.txtClr).value<QColor>()));
+    fmt.setBackground(QBrush(QVariant(vis.txtBg).value<QColor>()));
+    fmt.setFontFamilies({vis.ffamily});
+    fmt.setFont(QFont(vis.font));
+    fmt.setFontItalic(vis.italic);
+    fmt.setFontUnderline(vis.underline);
+    fmt.setFontWeight(vis.bold?700:400);
+    fmt.setFontPointSize(vis.fontSize);
+    return fmt;
+}
+
+QTextBlockFormat GeminiParser::getFormat(const int item) const {
+    QTextBlockFormat fmt;
+    fmt.setLeftMargin(_cfg->getVisual(item).ident);
+    if (item==GeminiParser::itemPreformat) {
+        fmt.setNonBreakableLines(true);
+    }
+    return fmt;
+}
+
+QPair<int,QString> GeminiParser::cacheSize() const {
+    QDir dir(cacheFolder);
+    QFileInfoList infoList = dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
+    QPair<int,QString> ret;
+    for (auto x=0;x<infoList.size();++x) {
+        ret.first = ret.first + infoList.at(x).size();
+    }
+    int power = 0;
+    while (ret.first>1024) {
+        ++power;
+        ret.first=ret.first/1024;
+    }
+    ret.second = units.value(power);
+    return ret;
+}
+
+QStringList GeminiParser::findLines(const QString &text) const {
+    QStringList ret;
+    int lastPos = 0;
+    for (auto pos=0;pos<text.size();++pos) {
+        if (text.at(pos)==QChar::LineFeed) {
+            ret.append(text.sliced(lastPos,(pos-lastPos)));
+            lastPos = pos+1;
+        }
+    }
+    return ret;
+}
+
+void GeminiParser::reloadCache() {
+    cacheFolder = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+}
+
+void GeminiParser::clearCache() {
+    QDir dir(cacheFolder);
+    dir.removeRecursively();
+    dir.mkpath(cacheFolder);
+}
+
+void GeminiParser::loadPage(const QString &uri) {
+    conn.fetchPage(uri);
 }
 
 void GeminiParser::parsePage(const QByteArray &content) {
@@ -34,6 +128,8 @@ void GeminiParser::parsePage(const QByteArray &content) {
     if (_lines.size()==0) { return; }
     QString statusLine = _lines.takeFirst().remove(QChar::CarriageReturn);
     _code = statusLine.sliced(0,2).toInt(); statusLine.remove(0,2);
+    emit status(_code,statusLine);
+    emit gotPage();
     if (_code!=20) {
         if (_code<10&&_code>69) {
             _txt->clear();
@@ -109,7 +205,6 @@ void GeminiParser::parsePage(const QByteArray &content) {
             _txt->setPlainText(tr("Certificate error: %1.\nServer says: %2").arg(_code).arg(content.isEmpty()?tr("Nothing, no response."):content));
             return;
         }
-        qDebug() << "non-20 status" << statusLine;
         return;
     }
     if ((!statusLine.contains("text/gemini",Qt::CaseInsensitive)&&(!statusLine.contains("text/plain",Qt::CaseInsensitive)))) {
@@ -188,69 +283,4 @@ void GeminiParser::parsePage(const QByteArray &content) {
         crs.setBlockFormat(getFormat(GeminiParser::itemText));
         crs.insertText(_lines.at(x)+QChar::LineFeed);
     }
-}
-
-QTextDocument* GeminiParser::getPage() const {
-    return _txt;
-}
-
-QTextCharFormat GeminiParser::getStyle(const int item) const {
-    ConfigFile::visualStruct vis = _cfg->getVisual(item);
-    QTextCharFormat fmt;
-    fmt.setForeground(QBrush(QVariant(vis.txtClr).value<QColor>()));
-    fmt.setBackground(QBrush(QVariant(vis.txtBg).value<QColor>()));
-    fmt.setFontFamilies({vis.ffamily});
-    fmt.setFont(QFont(vis.font));
-    fmt.setFontItalic(vis.italic);
-    fmt.setFontUnderline(vis.underline);
-    fmt.setFontWeight(vis.bold?700:400);
-    fmt.setFontPointSize(vis.fontSize);
-    return fmt;
-}
-
-QTextBlockFormat GeminiParser::getFormat(const int item) const {
-    QTextBlockFormat fmt;
-    fmt.setLeftMargin(_cfg->getVisual(item).ident);
-    if (item==GeminiParser::itemPreformat) {
-        fmt.setNonBreakableLines(true);
-    }
-    return fmt;
-}
-
-QPair<int,QString> GeminiParser::cacheSize() const {
-    QDir dir(cacheFolder);
-    QFileInfoList infoList = dir.entryInfoList(QDir::Files|QDir::NoDotAndDotDot);
-    QPair<int,QString> ret;
-    for (auto x=0;x<infoList.size();++x) {
-        ret.first = ret.first + infoList.at(x).size();
-    }
-    int power = 0;
-    while (ret.first>1024) {
-        ++power;
-        ret.first=ret.first/1024;
-    }
-    ret.second = units.value(power);
-    return ret;
-}
-
-QStringList GeminiParser::findLines(const QString &text) const {
-    QStringList ret;
-    int lastPos = 0;
-    for (auto pos=0;pos<text.size();++pos) {
-        if (text.at(pos)==QChar::LineFeed) {
-            ret.append(text.sliced(lastPos,(pos-lastPos)));
-            lastPos = pos+1;
-        }
-    }
-    return ret;
-}
-
-void GeminiParser::reloadCache() {
-    cacheFolder = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-}
-
-void GeminiParser::clearCache() {
-    QDir dir(cacheFolder);
-    dir.removeRecursively();
-    dir.mkpath(cacheFolder);
 }

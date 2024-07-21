@@ -13,3 +13,18 @@ find_package(Qt6 REQUIRED COMPONENTS Core Network LinguistTools)
 add_subdirectory(src/core)
 add_subdirectory(src/Desktop)
 add_subdirectory(tests)
+
+find_package(Doxygen)
+if(Doxygen_FOUND)
+    add_subdirectory(docs)
+else()
+    message(STATUS "Doxygen not found, not building docs")
+endif()
+
+set(distfiles
+    README.md
+    LICENSE
+    COPYING
+)
+
+add_custom_target(legal SOURCES ${distfiles})
