@@ -23,6 +23,7 @@ private slots:
     void ConfigVisualDefaults();
     void ConfigTLSDefaults();
     void ConfigBrowsingDefaults();
+    void ConfigSetupDefaults();
     void AlterGeneralData_init();
     void AlterGeneralData();
     void AlterGeneralData_cleanup();
@@ -35,6 +36,9 @@ private slots:
     void AlterBrowsingData_init();
     void AlterBrowsingData();
     void AlterBrowsingData_cleanup();
+    void AlterSetupData_init();
+    void AlterSetupData();
+    void AlterSetupData_cleanup();
 };
 
 TestConfigFile::TestConfigFile() {}
@@ -43,6 +47,7 @@ TestConfigFile::~TestConfigFile() {}
 
 void TestConfigFile::initTestCase() {
     cfg = new ConfigFile(this);
+    cfg->defaults(ConfigFile::All);
     QVERIFY2(cfg->status()==ConfigFile::OK,qPrintable(cfg->statusText()));
 }
 
@@ -98,6 +103,12 @@ void TestConfigFile::ConfigBrowsingDefaults() {
     QCOMPARE(bro.externalOption,ConfigFile::OsOption);
     QCOMPARE(bro.home,"medusae.space");
     QCOMPARE(bro.newTab,true);
+}
+
+void TestConfigFile::ConfigSetupDefaults() {
+    QCOMPARE(cfg->getSetup().geo,QSize(800,450));
+    QCOMPARE(cfg->getSetup().pos,QPoint(12,74));
+    QCOMPARE(cfg->getSetup().tabs,QStringList());
 }
 
 void TestConfigFile::AlterGeneralData_init() {
@@ -195,6 +206,22 @@ void TestConfigFile::AlterBrowsingData() {
 
 void TestConfigFile::AlterBrowsingData_cleanup() {
     cfg->defaults(ConfigFile::Browse);
+}
+
+void TestConfigFile::AlterSetupData_init() {
+    cfg->setGeo(QSize(850,720));
+    cfg->setPos(QPoint(100,100));
+    cfg->setTabs({"medusae.space","gemini.tabs"});
+}
+
+void TestConfigFile::AlterSetupData() {
+    QCOMPARE(cfg->getSetup().geo,QSize(850,720));
+    QCOMPARE(cfg->getSetup().pos,QPoint(100,100));
+    QCOMPARE(cfg->getSetup().tabs,QStringList({"medusae.space","gemini.tabs"}));
+}
+
+void TestConfigFile::AlterSetupData_cleanup() {
+    cfg->defaults(ConfigFile::Setup);
 }
 
 QTEST_MAIN(TestConfigFile)

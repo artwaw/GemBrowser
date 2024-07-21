@@ -1,4 +1,5 @@
 #include "geminiprotocol.h"
+#include "toolkitclass.h"
 
 #include <QSslCertificate>
 #include <QSslConfiguration>
@@ -17,12 +18,7 @@ GeminiProtocol::GeminiProtocol(QObject *parent) : QObject{parent} {
     QSslConfiguration config = socket.sslConfiguration();
     config.setProtocol(QSsl::TlsV1_2OrLater);
     socket.setSslConfiguration(config);
-    QString dataPath = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
-    QDir dir(dataPath);
-    if (!dir.exists()) {
-        dir.mkpath(dataPath);
-    }
-    if (!dataPath.endsWith('/')) { dataPath.append('/'); }
+    QString dataPath = ToolkitClass::dataPath();
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE","ssl");
     db.setDatabaseName(dataPath+"data.db");
     if (!db.open()) {
@@ -49,6 +45,9 @@ void GeminiProtocol::fetchPage(const QString &uri) {
     QString query = uri;
     QStringList parts = query.remove("gemini://").split('/',Qt::SkipEmptyParts);
     _uri = uri;
+    if (socket.state()==QSslSocket::ConnectedState||socket.state()==QSslSocket::ConnectingState) {
+        socket.close();
+    }
     socket.connectToHostEncrypted(parts.at(0),_port);
     socket.write(_uri.toUtf8());
 }

@@ -18,6 +18,7 @@ set(TS_FILES TNGemBrowser_pl_PL.ts)
 set(PROJECT_SOURCES
     main.cpp
     gembrowser.h gembrowser.cpp gembrowser.ui
+    gemwidget.h gemwidget.cpp
     prefsdialog.h prefsdialog.cpp prefsdialog.ui
     ${TS_FILES}
 )

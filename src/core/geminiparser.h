@@ -7,6 +7,7 @@
 #include <QTextBlockFormat>
 
 #include "configfile.h"
+#include "geminiprotocol.h"
 
 class GeminiParser : public QObject
 {
@@ -33,15 +34,17 @@ public:
     };
 
 public slots:
-    void parsePage(const QByteArray &content);
     void reloadCache();
     void clearCache();
+    void loadPage(const QString &uri);
 
 signals:
     void error(const QString &reason);
     void sensitiveInput();
     void input();
     void redirection(const QString &target);
+    void status(const int code,const QString &desc);
+    void gotPage();
 
 private:
     QTextDocument* _txt;
@@ -58,6 +61,9 @@ private:
         {3,"GB"},//I sincerily doubt we'll get here but...
         {4,"TB"}
     };
+    GeminiProtocol conn;
+
+    void parsePage(const QByteArray &content);
 };
 
 #endif // GEMINIPARSER_H

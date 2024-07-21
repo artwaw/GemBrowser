@@ -4,8 +4,8 @@ project(GemBrowserTests LANGUAGES CXX)
 
 enable_testing()
 
-find_package(QT NAMES Qt6 REQUIRED COMPONENTS Test Widgets Gui)
-find_package(Qt6 REQUIRED COMPONENTS Test Widgets Gui)
+find_package(QT NAMES Qt6 REQUIRED COMPONENTS Test Widgets Gui Sql)
+find_package(Qt6 REQUIRED COMPONENTS Test Widgets Gui Sql)
 
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_AUTOMOC ON)
@@ -18,18 +18,23 @@ set(includes
     "../src/core/"
 )
 
-set(SOURCES
-	core/tst_configfile.cpp
-)
+add_executable(ConfigTests core/tst_configfile.cpp )
+add_executable(HistoryTests core/tst_historyclass.cpp )
 
-add_executable(GemBrowserTests ${SOURCES})
-target_include_directories(GemBrowserTests PRIVATE "core")
-target_include_directories(GemBrowserTests PRIVATE ${includes})
+target_include_directories(ConfigTests PRIVATE "core")
+target_include_directories(ConfigTests PRIVATE ${includes})
 
-add_test(NAME ConfigFile COMMAND ConfigFile)
+target_include_directories(HistoryTests PRIVATE "core")
+target_include_directories(HistoryTests PRIVATE ${includes})
 
-target_link_libraries(GemBrowserTests PRIVATE Qt6::Test)
-target_link_libraries(GemBrowserTests PRIVATE Qt6::Widgets)
-target_link_libraries(GemBrowserTests PRIVATE Qt6::Gui)
-target_link_libraries(GemBrowserTests PRIVATE core)
+add_test(NAME CoreTests COMMAND CoreTests )
+
+target_link_libraries(ConfigTests PRIVATE Qt6::Test)
+target_link_libraries(ConfigTests PRIVATE Qt6::Widgets)
+target_link_libraries(ConfigTests PRIVATE Qt6::Gui)
+target_link_libraries(ConfigTests PRIVATE core)
+
+target_link_libraries(HistoryTests PRIVATE Qt6::Test)
+target_link_libraries(HistoryTests PRIVATE Qt6::Sql)
+target_link_libraries(HistoryTests PRIVATE core)
 

@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.5)
 
 project(core LANGUAGES CXX)
 
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 set(TS_FILES core.ts)
@@ -13,6 +15,8 @@ add_library(core SHARED
   configfile.h configfile.cpp
   geminiparser.h geminiparser.cpp
   geminiprotocol.h geminiprotocol.cpp
+  historyclass.h historyclass.cpp
+  toolkitclass.h toolkitclass.cpp
 )
 
 qt_create_translation(QM_FILES ${CMAKE_SOURCE_DIR} TS_FILES core_PL.ts

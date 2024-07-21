@@ -1,8 +1,11 @@
 #ifndef CONFIGFILE_H
 #define CONFIGFILE_H
 
+#include "toolkitclass.h"
+
 #include <QObject>
-#include <QStandardPaths>
+#include <QSize>
+#include <QPoint>
 
 /*!
  * \brief The ConfigFile class - reading, writing and maintaing program settings. Source of truth.
@@ -49,6 +52,12 @@ public:
         QString home;
     };
 
+    struct setupStruct {
+        QSize geo;
+        QPoint pos;
+        QStringList tabs;
+    };
+
     enum externalLinksOption {
         Ignore = -1,
         OsOption = 0,
@@ -60,7 +69,8 @@ public:
         General = 1,
         Visual = 2,
         TLS = 3,
-        Browse = 4
+        Browse = 4,
+        Setup = 5
     };
 
     enum status {
@@ -75,6 +85,9 @@ public:
     void alterVisual(const int idx, const visualStruct &vis);
     void alterTLS(const tlsStruct &tlss);
     void alterBrowsing(const browsingStruct &browse);
+    void setGeo(const QSize &_geo);
+    void setPos(const QPoint &_pos);
+    void setTabs(const QStringList &_tabs) { setup.tabs = _tabs; };
     int status() const { return _status; };
     QString statusText() const { return _statusText; };
     QString getConfigPath() const { return _fpath; };
@@ -82,6 +95,10 @@ public:
     visualStruct getVisual(const int idx =0) const { return _visual.at(idx); }
     tlsStruct getTLS() const { return _tls; };
     browsingStruct getBrowse() const { return _browser; };
+    QSize getGeo() const { return setup.geo; };
+    QPoint getPos() const { return setup.pos; }
+    QStringList getTabs() const { return setup.tabs; }
+    setupStruct getSetup() const { return setup; }
 
 public slots:
     void readSettings();
@@ -94,7 +111,7 @@ signals:
     void error();
 
 private:
-    QString _fpath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation)+"/gb.cfg";
+    QString _fpath = ToolkitClass::configPath()+"/gb.cfg";
     const QString statusOkText = tr("All good");
     const QString statusReadErrorText = tr("Error opening config file for reading. ");
     const QString statusWriteErrorText = tr("Error opening config file for writing. ");
@@ -102,6 +119,7 @@ private:
     QList<visualStruct> _visual;
     tlsStruct _tls;
     browsingStruct _browser;
+    setupStruct setup;
     int _status = ConfigFile::OK;
     QString _statusText = statusOkText;
 };
