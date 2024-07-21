@@ -23,7 +23,8 @@ endif()
 
 set(distfiles
     README.md
-    LICENSE.md
+    LICENSE
+    COPYING
 )
 
 add_custom_target(legal SOURCES ${distfiles})
