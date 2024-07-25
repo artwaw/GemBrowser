@@ -21,6 +21,8 @@ GemWidget::GemWidget(QWidget *parent, ConfigFile *cfg):QTextBrowser(parent) {
         return;
     }
     _cfg = cfg;
+    setOpenLinks(false);
+    setOpenExternalLinks(false);
     parser = new GeminiParser(this,cfg);
     setDocument(parser->getPage());
     timer.setTimerType(Qt::CoarseTimer);

@@ -45,6 +45,7 @@ private:
     const QString tableName = dbname;
     const QString tableQuery = "create table if not exists "+tableName+"(idx integer primary key, url text unique, lastVisit datetime not null default current_timestamp, totalVisits integer default 0);";
     QSqlTableModel *_mdl;
+
 };
 
 #endif // HISTORYCLASS_H

@@ -19,6 +19,7 @@ SPDX: GPL-3.0-or-later
 #include <QDialog>
 
 #include "configfile.h"
+#include "historyclass.h"
 
 namespace Ui {
 class PrefsDialog;
@@ -29,13 +30,14 @@ class PrefsDialog : public QDialog
     Q_OBJECT
 
 public:
-    explicit PrefsDialog(QWidget *parent = nullptr, ConfigFile *cfg = nullptr);
+    explicit PrefsDialog(QWidget *parent = nullptr, ConfigFile *cfg = nullptr, HistoryClass *hist = nullptr);
     ~PrefsDialog();
     void setCacheSize(const QPair<int,QString> &cacheSize);
 
 private:
     Ui::PrefsDialog *ui;
     ConfigFile *_cfg;
+    HistoryClass *history;
     ConfigFile::generalStruct iGeneral;
     QList<ConfigFile::visualStruct> iVisual,tmp;
     ConfigFile::browsingStruct iBrowse;

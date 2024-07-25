@@ -54,7 +54,7 @@ QStringList HistoryClass::getUrls() const {
         if (!db.open()) { return QStringList(); }
     }
     QSqlQuery query(db);
-    query.exec("select url from history;");
+    query.exec("select url from history order by lastVisit;");
     QStringList ret;
     while (query.next()) { ret.append(query.value(0).toString());}
     return ret;

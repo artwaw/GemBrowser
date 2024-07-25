@@ -19,10 +19,12 @@ SPDX: GPL-3.0-or-later
 #include <QSettings>
 #include <QFontDatabase>
 
-PrefsDialog::PrefsDialog(QWidget *parent, ConfigFile *cfg) : QDialog(parent), ui(new Ui::PrefsDialog) {
+PrefsDialog::PrefsDialog(QWidget *parent, ConfigFile *cfg, HistoryClass *hist) : QDialog(parent), ui(new Ui::PrefsDialog) {
     ui->setupUi(this);
     if (cfg==nullptr) { qFatal("cfg is null in PrefsDialog!"); return; }
+    if (hist==nullptr) { qFatal("history is null in PrefsDialog!"); return; }
     _cfg = cfg;
+    history = hist;
     connect(ui->okBtn,&QPushButton::clicked,this,&PrefsDialog::verifyData);
     connect(ui->CancelBtn,&QPushButton::clicked,this,&PrefsDialog::reject);
     connect(ui->defaultsBtn,&QPushButton::clicked,this,[=](){
@@ -93,6 +95,7 @@ void PrefsDialog::verifyData() {
 }
 
 void PrefsDialog::clearHistory() {
+    history->clear();
     emit rebuildHistory();
 }
 
